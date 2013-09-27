@@ -22,5 +22,5 @@ main = scotty 3000 $ do
     json (jsonify result)
 
 jsonify :: CompileResult -> Value
-jsonify (CompileSuccess js) = toJSON ["error" .= Null, "js" .= js]
-jsonify (CompileError err)  = toJSON ["error" .= err, "js" .= Null]
+jsonify (CompileSuccess js) = object ["error" .= Null, "js" .= js]
+jsonify (CompileError err)  = object ["error" .= err, "js" .= Null]
