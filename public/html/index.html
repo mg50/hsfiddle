@@ -77,7 +77,6 @@ handler m e = do
 module Main where
 
 import JavaScript.JQuery
-import JavaScript.JQuery.Internal
 import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.Chan
@@ -90,10 +89,9 @@ count n chan = do
   count (n+1) chan
 
 display :: JQuery -> Chan String -> IO ()
-display el chan = do
+display el chan = void $ do
   num <- readChan chan
   setText (T.pack num) el
-  return ()
 
 main = do
   chan <- newChan
