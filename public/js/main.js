@@ -41,4 +41,14 @@ $(document).ready(function() {
     fiddleArea.html('<iframe></iframe>')
     fiddleArea.find('iframe').get(0).contentWindow.document.write(iframeHtml);
   }
+
+  var exampleSelector = $('#examples')
+  exampleSelector.change(function() {
+    var val = $(this).val()
+    var example = $('#' + val)
+    if(example.length > 0) {
+      var exampleText = example.html()
+      codeEditor.setValue(exampleText);
+    }
+  })
 })
