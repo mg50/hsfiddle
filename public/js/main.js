@@ -8,7 +8,7 @@ $(document).ready(function() {
   var cssEditor = ace.edit('css-area').getSession()
   cssEditor.setMode('ace/mode/css')
 
-  var fiddle = $('#fiddle')
+  var fiddleArea = $('#fiddle-area')
 
   submit = $('#submit-fiddle')
   submit.click(function() {
@@ -28,6 +28,7 @@ $(document).ready(function() {
     scriptTag = '<script type="text/javascript">' + js + '</script>'
     iframeHtml = '<html><head>' + cssTag + '</head><body>' + html +
       scriptTag + '</body></html>'
-    fiddle.get(0).contentWindow.document.write(iframeHtml);
+    fiddleArea.html('<iframe></iframe>')
+    fiddleArea.find('iframe').get(0).contentWindow.document.write(iframeHtml);
   }
 })
