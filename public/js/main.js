@@ -47,8 +47,13 @@ $(document).ready(function() {
     var val = $(this).val()
     var example = $('#' + val)
     if(example.length > 0) {
-      var exampleText = example.html()
-      codeEditor.setValue(exampleText);
+      var exampleCode = example.find('[type=text/ghcjs]').html()
+      var exampleHtml = example.find('[type=text/html]').html()
+      var exampleCss = example.find('[type=text/css]').html()
+
+      codeEditor.setValue(exampleCode);
+      htmlEditor.setValue(exampleHtml);
+      cssEditor.setValue(exampleCss);
     }
   })
 })

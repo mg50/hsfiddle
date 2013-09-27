@@ -11,12 +11,12 @@
   <body>
     <div id="wrapper">
       <div id="nav">
+        <input id="submit-fiddle" type="submit">
         <select id="examples">
           <option value="">Examples</option>
           <option value="mousemove">jQuery mousemove</option>
           <option value="count">Counter with pre-emptive threading and channels</option>
         </select>
-        <input id="submit-fiddle" type="submit">
         <div id="compiling-notification">Compiling...</div>
       </div>
       <table id="editor-table">
@@ -29,7 +29,7 @@
         <tr id="editor-row">
           <td>
             <div class="editor" id="code-area"></div>
-          </div>
+          </td>
           <td>
             <div class="editor" id="html-area"></div>
           </td>
@@ -43,7 +43,10 @@
       </table>
     </div>
 
-    <script type="text/ghcjs" id="mousemove">{-# LANGUAGE OverloadedStrings #-}
+    <example id="mousemove">
+      <script type="text/html"><div class=".mouse"></div></script>
+      <script type="text/css"></script>
+      <script type="text/ghcjs" id="mousemove">{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -54,7 +57,6 @@ import qualified Data.Text as T
 
 main = do
   b <- select "body"
-  append "<div class='mouse'></div>" b
   m <- select ".mouse"
   mousemove (handler m) def b
 
@@ -64,9 +66,13 @@ handler m e = do
   y <- pageY e
   setText (T.pack $ show (x,y)) m
   return ()
-    </script>
+       </script>
+    </example>
 
-    <script type="text/ghcjs" id="count">{-# LANGUAGE OverloadedStrings #-}
+    <example id="count">
+      <script type="text/html"><div id="counter"></div></script>
+      <script type="text/css"></script>
+      <script type="text/ghcjs">{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -92,10 +98,9 @@ display el chan = do
 main = do
   chan <- newChan
   forkIO $ count 0 chan
-  b <- select "body"
-  append "<div></div>" b
-  d <- select "div"
+  d <- select "#counter"
   forever $ display d chan
-    </script>
+       </script>
+    </example>
   </body>
 </html>
