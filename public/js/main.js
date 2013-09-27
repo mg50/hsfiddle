@@ -23,6 +23,7 @@ $(document).ready(function() {
       dataType: 'json',
       success: function(r) {
         notification.css({display: 'none'})
+        if(r.error) console.log(r.error)
         fillFiddle(htmlEditor.getValue(), cssEditor.getValue(), r.js)
       },
       error: function(r) {
