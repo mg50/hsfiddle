@@ -14,22 +14,28 @@
         <input id="submit-fiddle" type="submit">
         <div id="compiling-notification">Compiling...</div>
       </div>
-      <div class="vertical">
-        <h2>code</h2>
-        <div class="editor" id="code-area"></div>
-      </div>
-      <div class="vertical">
-        <h2>html</h2>
-        <div class="editor" id="html-area"></div>
-      </div>
-      <div class="vertical">
-        <h2>css</h2>
-        <div class="editor" id="css-area"></div>
-      </div>
-      <div class="vertical">
-        <h2>result</h2>
-        <div class="editor" id="fiddle-area"></div>
-      </div>
+      <table id="editor-table">
+        <tr id="editor-headings">
+          <th>code</th>
+          <th>html</th>
+          <th>css</th>
+          <th>result</th>
+        </tr>
+        <tr id="editor-row">
+          <td>
+            <div class="editor" id="code-area"></div>
+          </div>
+          <td>
+            <div class="editor" id="html-area"></div>
+          </td>
+          <td>
+            <div class="editor" id="css-area"></div>
+          </td>
+          <td>
+            <div class="editor" id="fiddle-area"></div>
+          </td>
+        </tr>
+      </table>
     </div>
   </body>
 </html>

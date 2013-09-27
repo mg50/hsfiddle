@@ -9,8 +9,6 @@ html, body {
 }
 
 #wrapper table {
-  height: 100%;
-  width: 100%;
   border-collapse: collapse;
 }
 
@@ -23,15 +21,22 @@ html, body {
   position: relative;
 }
 
-#wrapper td div {
-  width: 70%;
-  height: 100%;
-  outline: none;
+#editor-table {
+  width: 100%;
+  height: 90%;
 }
 
-.vertical {
-  height: 85%;
-  width: 24%;
+#editor-headings {
+  height: 20px;
+}
+
+#editor-row {
+  height: 100%
+  width: 100%;
+}
+
+#editor-row td {
+  width: 25%;
   display: inline-block;
   position: relative;
 }
