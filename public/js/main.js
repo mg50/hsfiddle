@@ -34,8 +34,9 @@ $(document).ready(function() {
 
   function fillFiddle(html, css, js) {
     cssTag = '<style type="text/css">' + css + '</style>'
+    jqueryTag = '<script type="text/javascript" src="./js/jquery.min.js"></script>'
     scriptTag = '<script type="text/javascript">' + js + '</script>'
-    iframeHtml = '<html><head>' + cssTag + '</head><body>' + html +
+    iframeHtml = '<html><head>' + jqueryTag + cssTag + '</head><body>' + html +
       scriptTag + '</body></html>'
     fiddleArea.html('<iframe></iframe>')
     fiddleArea.find('iframe').get(0).contentWindow.document.write(iframeHtml);
