@@ -9,10 +9,10 @@ data CompileResult = CompileSuccess String | CompileError String
 
 compile :: String -> IO CompileResult
 compile code = withTempDirectory $ \dir -> do
-  let file = dir ++ "/code.js"
-      addHeaders code = "{-# LANGUAGE JavaScriptFFI -#}\n\n" ++ code
+  let file = dir ++ "/code.hs"
+      addHeaders code = "{-# LANGUAGE JavaScriptFFI #-}\n\n" ++ code
   writeFile file (addHeaders code)
-  (exitCode, out, err) <- ghcjs dir file
+  (exitCode, out, err) <- ghcjs dir
   if exitCode == ExitSuccess
      then readCompiledJS dir
      else return (CompileError err)
@@ -26,11 +26,11 @@ withTempDirectory f = do dir <- randomTempDir
 
 randomTempDir :: IO String
 randomTempDir = do num <- Rand.randomIO :: IO Int
-                   return $ "/tmp/ghcjs" ++ show num
+                   return $ "/home/vagrant/ghcjs" ++ show num
 
-ghcjs :: String -> String -> IO (ExitCode, String, String)
-ghcjs dir file =
-  P.readProcessWithExitCode "ghcjs" ["-o", dir ++ "/code", file] ""
+ghcjs :: String -> IO (ExitCode, String, String)
+ghcjs dir =
+  P.readProcessWithExitCode "./bin/compile" [dir] ""
 
 readCompiledJS :: String -> IO CompileResult
 readCompiledJS dir = do js <- Strict.readFile $ dir ++ "/code.jsexe/all.js"
