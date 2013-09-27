@@ -21,7 +21,7 @@ main = scotty 3000 $ do
     result <- liftIO $ compile (T.unpack code)
     json (jsonify result)
 
-  post "/ajax" $ do
+  get "/ajax" $ do
     html "an ajax result"
 
 jsonify :: CompileResult -> Value
