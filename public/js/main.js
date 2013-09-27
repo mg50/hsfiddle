@@ -12,9 +12,13 @@ $(document).ready(function() {
 
   var notification = $('#compiling-notification')
 
-  setTimeout(function() {
-    $('#accordion').css('display', 'block').accordion()
-  }, 100)
+  $('#accordion').css('display', 'block').accordion({
+    activate: function() {
+      codeEditor.setValue(codeEditor.getValue())
+      htmlEditor.setValue(htmlEditor.getValue())
+      cssEditor.setValue(cssEditor.getValue())
+    }
+  })
 
   submit = $('#submit-fiddle')
   submit.click(function() {
