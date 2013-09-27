@@ -4,6 +4,10 @@ html, body {
   margin: 0;
 }
 
+#wrapper {
+  padding: 20px
+}
+
 #wrapper table {
   height: 100%;
   width: 100%;
@@ -26,11 +30,16 @@ html, body {
 }
 
 .vertical {
-  height: 100%;
+  height: 85%;
   width: 24%;
   display: inline-block;
+  position: relative;
+}
+
+.editor {
   border: 1px solid black;
-  position: relative
+  height: 100%;
+  width: 100%;
 }
 
 #code-area {
