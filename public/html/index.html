@@ -134,7 +134,7 @@ main = do
     <example id="ajaxecho">
       <script type="text/html"></script>
       <script type="text/css"></script>
-      <script type="text/ghcjs">{-# LANGUAGE OverloadedStrings #-}
+      <script type="text/ghcjs"{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -142,6 +142,7 @@ import GHCJS.Types
 import GHCJS.Foreign
 import JavaScript.JQuery
 import JavaScript.JQuery.Internal
+import Control.Applicative ((<$>))
 import Data.Default
 import qualified Data.Text as T
 
@@ -151,16 +152,15 @@ foreign import javascript unsafe
 
 getURL url = ajax url [] def
 
-handle :: AjaxResult -> IO ()
-handle result = case (arData result) of
-  Nothing -> return ()
-  Just txt -> alert $ toJSString txt
+toText :: AjaxResult -> T.Text
+toText result = case arData result of
+  Nothing -> error "result had no data"
+  Just txt -> txt
 
 main = do
-  result1 <- getURL "/ajax/echo/a"
-  handle result1
-  result2 <- getURL "/ajax/echo/b"
-  handle result2</script>
+  x <- toText <$> getURL "/ajax/echo/a"
+  y <- toText <$> getURL "/ajax/echo/b"
+  alert . toJSString $ T.append x y</script>
     </example>
   </body>
 </html>
