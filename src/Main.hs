@@ -21,6 +21,9 @@ main = scotty 3000 $ do
     result <- liftIO $ compile (T.unpack code)
     json (jsonify result)
 
+  post "/ajax" $ do
+    html "an ajax result"
+
 jsonify :: CompileResult -> Value
 jsonify (CompileSuccess js) = object ["error" .= Null, "js" .= js]
 jsonify (CompileError err)  = object ["error" .= err, "js" .= Null]
