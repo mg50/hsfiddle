@@ -1,22 +1,24 @@
 $(document).ready(function() {
-  ace.edit('code-area').getSession().setMode('ace/mode/haskell')
-  ace.edit('html-area').getSession().setMode('ace/mode/html')
-  ace.edit('css-area').getSession().setMode('ace/mode/css')
+  var codeEditor = ace.edit('code-area').getSession()
+  codeEditor.setMode('ace/mode/haskell')
 
+  var htmlEditor = ace.edit('html-area').getSession()
+  htmlEditor.setMode('ace/mode/html')
 
-  htmlArea = $('#html-area')
-  codeArea = $('#code-area')
-  cssArea = $('#css-area')
-  fiddle = $('#fiddle')
+  var cssEditor = ace.edit('css-area').getSession()
+  cssEditor.setMode('ace/mode/css')
+
+  var fiddle = $('#fiddle')
 
   submit = $('#submit-fiddle')
   submit.click(function() {
     $.ajax({
       url: '/compile',
-      data: {code: encodeURIComponent(fiddle.html())},
+      type: 'post',
+      data: {code: codeEditor.getValue()},
       dataType: 'json',
       success: function(r) {
-        fillFiddle(htmlArea.html(), cssArea.html(), r.js)
+        fillFiddle(htmlEditor.getValue(), cssEditor.getValue(), r.js)
       }
     })
   })

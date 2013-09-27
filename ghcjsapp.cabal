@@ -19,10 +19,15 @@ executable ghcjsapp
   main-is: Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.5 && <4.6,
+  build-depends:       base >=4.5,
                        text,
                        mtl,
                        scotty,
-                       wai-middleware-static
+                       wai-middleware-static,
+                       temporary,
+                       strict,
+                       directory,
+                       random,
+                       process
   hs-source-dirs:      src
   default-language:    Haskell2010
