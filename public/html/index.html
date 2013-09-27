@@ -14,6 +14,7 @@
         <select id="examples">
           <option value="">Examples</option>
           <option value="mousemove">jQuery mousemove</option>
+          <option value="count">Counter with pre-emptive threading and channels</option>
         </select>
         <input id="submit-fiddle" type="submit">
         <div id="compiling-notification">Compiling...</div>
@@ -63,6 +64,38 @@ handler m e = do
   y <- pageY e
   setText (T.pack $ show (x,y)) m
   return ()
+    </script>
+
+    <script type="text/ghcjs" id="count">{-# LANGUAGE OverloadedStrings #-}
+
+module Main where
+
+import JavaScript.JQuery
+import JavaScript.JQuery.Internal
+import Control.Monad
+import Control.Concurrent
+import Control.Concurrent.Chan
+import qualified Data.Text as T
+
+count :: Int -> Chan String -> IO ()
+count n chan = do
+  writeChan chan (show n)
+  threadDelay 1000000
+  count (n+1) chan
+
+display :: JQuery -> Chan String -> IO ()
+display el chan = do
+  num <- readChan chan
+  setText (T.pack num) el
+  return ()
+
+main = do
+  chan <- newChan
+  forkIO $ count 0 chan
+  b <- select "body"
+  append "<div></div>" b
+  d <- select "div"
+  forever $ display d chan
     </script>
   </body>
 </html>
