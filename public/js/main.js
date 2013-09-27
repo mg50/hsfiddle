@@ -13,7 +13,7 @@ $(document).ready(function() {
   var notification = $('#compiling-notification')
 
   $('#accordion').css('display', 'block').accordion({
-    activate: function() {
+    beforeActivate: function() {
       codeEditor.setValue(codeEditor.getValue())
       htmlEditor.setValue(htmlEditor.getValue())
       cssEditor.setValue(cssEditor.getValue())
