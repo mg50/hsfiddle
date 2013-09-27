@@ -12,43 +12,38 @@ html, body {
   border-collapse: collapse;
 }
 
-#wrapper td {
-  vertical-align: top;
-  padding: 10px;
-  border: 1px solid black;
-  height: 50%;
+#main-table {
+  width: 100%;
+}
+
+#main-table td {
+  padding: 0;
+}
+
+#fiddle-td {
   width: 50%;
-  position: relative;
 }
 
-#editor-table {
-  width: 100%;
-  height: 90%;
-}
-
-#editor-headings {
-  height: 20px;
-}
-
-#editor-row {
-  height: 100%
-  width: 100%;
-}
-
-#editor-row td {
-  width: 25%;
-  display: inline-block;
-  position: relative;
-}
-
-.editor {
-  border: 1px solid black;
+#accordion, #fiddle-area {
   height: 100%;
   width: 100%;
 }
 
-#code-area {
+#accordion {
   position: relative;
+  display: none;
+}
+
+#accordion > div {
+  height: 500px;
+  display: relative;
+}
+
+#fiddle-area {
+  width: 100%;
+  height: 100%;
+  border: 1px solid black;
+  display: inline-block;
 }
 
 #fiddle-area iframe {

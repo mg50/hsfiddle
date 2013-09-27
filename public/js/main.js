@@ -12,6 +12,10 @@ $(document).ready(function() {
 
   var notification = $('#compiling-notification')
 
+  setTimeout(function() {
+    $('#accordion').css('display', 'block').accordion()
+  }, 100)
+
   submit = $('#submit-fiddle')
   submit.click(function() {
     notification.css({display: 'inline-block'})
@@ -55,5 +59,10 @@ $(document).ready(function() {
       htmlEditor.setValue(exampleHtml);
       cssEditor.setValue(exampleCss);
     }
+  })
+
+  var tds = $('#editor-row td')
+  tds.click(function() {
+
   })
 })

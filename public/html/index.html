@@ -1,7 +1,9 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="./css/main.css" />
+    <link rel="stylesheet" type="text/css" href="./css/jquery-ui.min.css" />
     <script type="text/javascript" src="./js/jquery.min.js"></script>
+    <script type="text/javascript" src="./js/jquery-ui.min.js"></script>
     <script type="text/javascript" src="./js/ace/ace.js"></script>
     <script type="text/javascript" src="./js/ace/mode-haskell.js"></script>
     <script type="text/javascript" src="./js/ace/mode-html.js"></script>
@@ -21,25 +23,22 @@
         </select>
         <div id="compiling-notification">Compiling...</div>
       </div>
-      <table id="editor-table">
-        <tr id="editor-headings">
-          <th>code</th>
-          <th>html</th>
-          <th>css</th>
-          <th>result</th>
-        </tr>
-        <tr id="editor-row">
+      <table id="main-table">
+        <tr>
           <td>
-            <div class="editor" id="code-area"></div>
+            <div id="accordion">
+              <h3>Haskell</h3>
+              <div id="code-area"></div>
+
+              <h3>HTML</h3>
+              <div id="html-area"></div>
+
+              <h3>CSS</h3>
+              <div id="css-area"></div>
+            </div>
           </td>
-          <td>
-            <div class="editor" id="html-area"></div>
-          </td>
-          <td>
-            <div class="editor" id="css-area"></div>
-          </td>
-          <td>
-            <div class="editor" id="fiddle-area"></div>
+          <td id="fiddle-td">
+            <div id="fiddle-area"></div>
           </td>
         </tr>
       </table>
