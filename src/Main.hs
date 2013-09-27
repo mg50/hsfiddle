@@ -7,6 +7,7 @@ import Control.Monad.Trans
 import Network.Wai.Middleware.Static
 import qualified Data.Text.Lazy as T
 import Compile
+import Data.Aeson hiding (json)
 
 main = scotty 3000 $ do
   middleware $ staticPolicy (noDots >-> addBase "./public")
@@ -18,7 +19,8 @@ main = scotty 3000 $ do
   post "/compile" $ do
     code <- param "code"
     result <- liftIO $ compile (T.unpack code)
-    case result of
-      CompileSuccess code -> liftIO $ print $ "success: " ++ code
-      CompileError err    -> liftIO $ print $ "error: " ++ err
-    liftIO $ print "asdf"
+    json (jsonify result)
+
+jsonify :: CompileResult -> Value
+jsonify (CompileSuccess js) = toJSON ["error" .= Null, "js" .= js]
+jsonify (CompileError err)  = toJSON ["error" .= err, "js" .= Null]
