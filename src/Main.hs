@@ -21,8 +21,9 @@ main = scotty 3000 $ do
     result <- liftIO $ compile (T.unpack code)
     json (jsonify result)
 
-  get "/ajax" $ do
-    html "an ajax result"
+  get "/ajax/echo/:word" $ do
+    word <- param "word"
+    html word
 
 jsonify :: CompileResult -> Value
 jsonify (CompileSuccess js) = object ["error" .= Null, "js" .= js]
