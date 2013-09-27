@@ -17,6 +17,7 @@
           <option value="mousemove">jQuery mousemove with callbacks</option>
           <option value="mousemove2">jQuery mousemove with channels</option>
           <option value="count">Counter with pre-emptive threading and channels</option>
+          <option value="ajaxecho">Monadic AJAX with JS FFI</option>
         </select>
         <div id="compiling-notification">Compiling...</div>
       </div>
@@ -128,6 +129,38 @@ main = do
   forkIO $ count 0 chan
   d <- select "#counter"
   forever $ display d chan</script>
+    </example>
+
+    <example id="ajaxecho">
+      <script type="text/html"></script>
+      <script type="text/css"></script>
+      <script type="text/ghcjs">{-# LANGUAGE OverloadedStrings #-}
+
+module Main where
+
+import GHCJS.Types
+import GHCJS.Foreign
+import JavaScript.JQuery
+import JavaScript.JQuery.Internal
+import Data.Default
+import qualified Data.Text as T
+
+foreign import javascript unsafe
+  "alert($1);"
+  alert :: JSString -> IO ()
+
+getURL url = ajax url [] def
+
+handle :: AjaxResult -> IO ()
+handle result = case (arData result) of
+  Nothing -> return ()
+  Just txt -> alert $ toJSString txt
+
+main = do
+  result1 <- getURL "/ajax/echo/a"
+  handle result1
+  result2 <- getURL "/ajax/echo/b"
+  handle result2</script>
     </example>
   </body>
 </html>
