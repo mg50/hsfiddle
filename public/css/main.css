@@ -37,7 +37,7 @@ html, body {
   position: relative;
 }
 
-#fiddle {
+#fiddle-area iframe {
   height: 100%;
   width: 100%;
 }
