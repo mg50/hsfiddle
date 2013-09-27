@@ -14,7 +14,8 @@
         <input id="submit-fiddle" type="submit">
         <select id="examples">
           <option value="">Examples</option>
-          <option value="mousemove">jQuery mousemove</option>
+          <option value="mousemove">jQuery mousemove with callbacks</option>
+          <option value="mousemove2">jQuery mousemove with channels</option>
           <option value="count">Counter with pre-emptive threading and channels</option>
         </select>
         <div id="compiling-notification">Compiling...</div>
@@ -65,8 +66,37 @@ handler m e = do
   x <- pageX e
   y <- pageY e
   setText (T.pack $ show (x,y)) m
-  return ()
-       </script>
+  return ()</script>
+    </example>
+
+    <example id="mousemove2">
+      <script type="text/html"><div class="mouse"></div></script>
+      <script type="text/css"></script>
+      <script type="text/ghcjs">{-# LANGUAGE OverloadedStrings #-}
+
+module Main where
+
+import JavaScript.JQuery
+import JavaScript.JQuery.Internal
+import Control.Concurrent.Chan
+import Data.Default
+import Control.Monad
+import qualified Data.Text as T
+
+main = do
+  b <- select "body"
+  m <- select ".mouse"
+  ch <- mouseChan b
+  forever $ do
+    e <- readChan ch
+    x <- pageX e
+    y <- pageY e
+    setText (T.pack $ show (x,y)) m
+
+mouseChan el = do
+  chan <- newChan
+  mousemove (writeChan chan) def el
+  return chan</script>
     </example>
 
     <example id="count">
@@ -97,8 +127,7 @@ main = do
   chan <- newChan
   forkIO $ count 0 chan
   d <- select "#counter"
-  forever $ display d chan
-       </script>
+  forever $ display d chan</script>
     </example>
   </body>
 </html>
