@@ -24,7 +24,6 @@ executable ghcjsapp
                        mtl,
                        scotty,
                        wai-middleware-static,
-                       temporary,
                        strict,
                        directory,
                        random,
