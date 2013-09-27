@@ -105,7 +105,7 @@ var HaskellHighlightRules = function() {
               { include: '#type_signature' },
               { defaultToken: 'meta.declaration.instance.haskell' } ] },
          { token: 'keyword.other.haskell',
-           'regex': 'foreign import javascript (safe|unsafe)' },
+           'regex': 'foreign import javascript (safe|unsafe|interruptible)' },
          { token: 'keyword.other.haskell',
            regex: 'import',
            push:
