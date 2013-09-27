@@ -1,0 +1,43 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+#wrapper table {
+  height: 100%;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#wrapper td {
+  vertical-align: top;
+  padding: 10px;
+  border: 1px solid black;
+  height: 50%;
+  width: 50%;
+  position: relative;
+}
+
+#wrapper td div {
+  width: 70%;
+  height: 100%;
+  outline: none;
+}
+
+.vertical {
+  height: 100%;
+  width: 24%;
+  display: inline-block;
+  border: 1px solid black;
+  position: relative
+}
+
+#code-area {
+  position: relative;
+}
+
+#fiddle {
+  height: 100%;
+  width: 100%;
+}
