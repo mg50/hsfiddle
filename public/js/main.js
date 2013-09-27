@@ -10,15 +10,23 @@ $(document).ready(function() {
 
   var fiddleArea = $('#fiddle-area')
 
+  var notification = $('#compiling-notification')
+
   submit = $('#submit-fiddle')
   submit.click(function() {
+    notification.css({display: 'inline-block'})
+
     $.ajax({
       url: '/compile',
       type: 'post',
       data: {code: codeEditor.getValue()},
       dataType: 'json',
       success: function(r) {
+        notification.css({display: 'none'})
         fillFiddle(htmlEditor.getValue(), cssEditor.getValue(), r.js)
+      },
+      error: function(r) {
+        notification.css({display: 'none'})
       }
     })
   })
