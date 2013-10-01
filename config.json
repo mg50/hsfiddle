@@ -1,0 +1,5 @@
+{
+  'server_ip': '',
+  'amqp_login': '',
+  'amqp_pass': ''
+}

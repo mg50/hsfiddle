@@ -4,6 +4,7 @@ module Main where
 import Network.AMQP
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text as T
+import Compile
 
 main = do
   conn <- openConnection "127.0.0.1" "/" "guest" "guest"
@@ -19,7 +20,11 @@ compile chan (requestMsg, envelope) = do
   case msgID requestMsg of
     Nothing -> return ()
     Just requestId -> do
-      let replyMsg = newMsg{ msgBody = "alert(4);"
+      result <- compile msg
+      let (txt, queue) = case result of
+                           CompileSuccess js -> (js, "compiled")
+                           CompileError err  -> (err, "error")
+          replyMsg = newMsg{ msgBody = txt
                            , msgDeliveryMode = Just Persistent
                            , msgReplyTo = Just requestId }
-      publishMsg chan "hsfiddle" "compiled" replyMsg
+      publishMsg chan "hsfiddle" queue replyMsg
