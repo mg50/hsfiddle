@@ -15,8 +15,7 @@ main = do
   closeConnection conn
   putStrLn "connection closed"
 
-compile chan (requestMsg, envelope) = do
-  let body = "asdf"
+compile chan (requestMsg, envelope) =
   case msgID requestMsg of
     Nothing -> return ()
     Just requestId -> do
