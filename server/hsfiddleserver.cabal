@@ -21,6 +21,7 @@ executable hsfiddleserver
                        mtl,
                        scotty,
                        wai-middleware-static,
+                       wai-extra,
                        strict,
                        directory,
                        random,
