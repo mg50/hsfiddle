@@ -49,6 +49,7 @@ callback :: (T.Text -> CompileResult) ->
             (Message, Envelope) ->
             IO ()
 callback ctor pending (msg, envelope) = do
+  ackEnv envelope
   let body = msgBody msg :: BL.ByteString
   case msgReplyTo msg of
     Nothing -> return ()
