@@ -21,6 +21,7 @@ tryCompile chan (requestMsg, envelope) =
   case msgID requestMsg of
     Nothing -> return ()
     Just requestId -> do
+      print $ "About to compile " ++ requestId
       result <- compile $ lazyBytestringToText $ msgBody requestMsg
       let (txt, queue) = case result of
                            CompileSuccess js -> (js, "compiled")
@@ -28,6 +29,7 @@ tryCompile chan (requestMsg, envelope) =
           replyMsg = newMsg{ msgBody = textToLazyBytestring txt
                            , msgDeliveryMode = Just Persistent
                            , msgReplyTo = Just requestId }
+      print $ "Finished compiling " ++ requestId
       publishMsg chan "hsfiddle" queue replyMsg
 
 lazyBytestringToText = TLazy.toStrict . Enc.decodeUtf8
