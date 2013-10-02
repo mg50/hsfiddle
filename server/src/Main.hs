@@ -6,6 +6,7 @@ import Control.Monad
 import Control.Monad.Trans
 import Network.Wai.Middleware.Static
 import Network.Wai.Middleware.RequestLogger
+import Network.Wai.Middleware.Gzip
 import qualified Data.Text.Lazy as T
 import qualified Data.Text as TStrict
 import qualified Data.Text.Lazy.Encoding as Enc
@@ -63,6 +64,7 @@ runServer :: Channel -> SafeMVar PendingCompilations -> IO ()
 runServer chan pending = scotty 3000 $ do
   middleware $ staticPolicy (noDots >-> addBase "./public")
   middleware logStdoutDev
+  middleware $ gzip def
 
   get "/" $ do
     file <- liftIO $ readFile "./public/html/index.html"
