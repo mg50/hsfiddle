@@ -42,7 +42,7 @@ $(document).ready(function() {
 
   function fillFiddle(html, css, js) {
     cssTag = '<style type="text/css">' + css + '</style>'
-    jqueryTag = '<script type="text/javascript" src="./js/jquery.min.js"></script>'
+    jqueryTag = '<script type="text/javascript" src="./js/vendor/jquery.min.js"></script>'
     scriptTag = '<script type="text/javascript">' + js + '</script>'
     iframeHtml = '<html><head>' + jqueryTag + cssTag + '</head><body>' + html +
       scriptTag + '</body></html>'
