@@ -30,8 +30,8 @@ main = do
   stop
 
 tryCompile chan sem (requestMsg, envelope) = do
-  acquire sem
   ackEnv envelope
+  acquire sem
   case msgID requestMsg of
     Nothing -> return ()
     Just requestId -> do
