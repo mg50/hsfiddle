@@ -6,10 +6,12 @@ import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TLazy
 import qualified Data.Text.Lazy.Encoding as Enc
+import Config
 import Compile
 
 main = do
-  conn <- openConnection "127.0.0.1" "/" "guest" "guest"
+  Config ampqServer ampqLogin ampqPass <- getConfig "../../config.json"
+  conn <- openConnection ampqServer "/" ampqLogin ampqPass
   chan <- openChannel conn
 
   consumeMsgs chan "uncompiled" Ack (tryCompile chan)
@@ -22,7 +24,7 @@ tryCompile chan (requestMsg, envelope) = do
   case msgID requestMsg of
     Nothing -> return ()
     Just requestId -> do
-      print $ "About to compile"
+      print "About to compile"
       result <- compile $ lazyBytestringToText $ msgBody requestMsg
       let (txt, queue) = case result of
                            CompileSuccess js -> (js, "compiled")
@@ -30,7 +32,7 @@ tryCompile chan (requestMsg, envelope) = do
           replyMsg = newMsg{ msgBody = textToLazyBytestring txt
                            , msgDeliveryMode = Just Persistent
                            , msgReplyTo = Just requestId }
-      print $ "Finished compiling"
+      print "Finished compiling"
       publishMsg chan "hsfiddle" queue replyMsg
 
 lazyBytestringToText = TLazy.toStrict . Enc.decodeUtf8
