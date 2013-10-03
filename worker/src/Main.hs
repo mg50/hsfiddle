@@ -15,7 +15,6 @@ import Semaphore
 
 main = do
   putStrLn "Starting worker..."
-  tid <- myThreadId
   Config ampqServer ampqLogin ampqPass maxCompilations <- getConfig "./config.json"
   conn <- openConnection ampqServer "/" ampqLogin ampqPass
   chan <- openChannel conn
@@ -24,10 +23,10 @@ main = do
   sem <- newSemaphore maxCompilations
   tag <- consumeMsgs chan "uncompiled" Ack (tryCompile chan sem)
 
-  let stop = gracefulExit chan conn tag sem tid
+  done <- newEmptyMVar
+  let stop = gracefulExit chan conn tag sem done
   forM_ [sigINT, sigTERM] $ \sig -> installHandler sig (Catch stop) Nothing
-  getLine
-  stop
+  takeMVar done
 
 tryCompile chan sem (requestMsg, envelope) = do
   ackEnv envelope
@@ -47,13 +46,13 @@ tryCompile chan sem (requestMsg, envelope) = do
       publishMsg chan "hsfiddle" queue replyMsg
   release sem
 
-gracefulExit chan conn tag sem tid = do
+gracefulExit chan conn tag sem done = do
   putStrLn "Waiting for compilations to finish..."
   cancelConsumer chan tag
   awaitDrain sem
   closeConnection conn
+  putMVar done ()
   putStrLn "Exiting..."
-  killThread tid
 
 lazyBytestringToText = TLazy.toStrict . Enc.decodeUtf8
 textToLazyBytestring = Enc.encodeUtf8 . TLazy.fromStrict
