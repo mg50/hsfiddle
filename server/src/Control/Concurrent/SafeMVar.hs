@@ -1,4 +1,3 @@
-
 module Control.Concurrent.SafeMVar where
 import Control.Monad
 import Control.Concurrent.MVar

@@ -13,8 +13,6 @@ import qualified Data.Text.Lazy.Encoding as Enc
 import qualified Data.Map as M
 import Data.Aeson hiding (json)
 import Network.AMQP
-import Control.Concurrent.MVar
-import Control.Concurrent.SafeMVar
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID.V4
@@ -37,7 +35,7 @@ main = do
   bindQueue chan "compiled" "hsfiddle" "compiled"
   bindQueue chan "error" "hsfiddle" "error"
 
-  pending <- newSafeMVar M.empty
+  pending <- newPending
   consumeMsgs chan "compiled" Ack (compiledCallback pending)
   consumeMsgs chan "error" Ack (errorCallback pending)
   runServer chan pending
@@ -46,21 +44,17 @@ compiledCallback = callback CompileSuccess
 errorCallback = callback CompileFailure
 
 callback :: (T.Text -> CompileResult) ->
-            SafeMVar PendingCompilations ->
+            PendingCompilations ->
             (Message, Envelope) ->
             IO ()
 callback ctor pending (msg, envelope) = do
   ackEnv envelope
   let body = msgBody msg :: BL.ByteString
   case msgReplyTo msg of
-    Nothing -> return ()
-    Just msgId -> modifySafeMVar pending $ \assoc -> do
-      case M.lookup msgId assoc of
-        Just mv -> putMVar mv $ ctor (Enc.decodeUtf8 body)
-        Nothing -> return ()
-      return assoc
+    Just msgId -> deliverPending pending msgId $ ctor (Enc.decodeUtf8 body)
+    Nothing    -> return ()
 
-runServer :: Channel -> SafeMVar PendingCompilations -> IO ()
+runServer :: Channel -> PendingCompilations -> IO ()
 runServer chan pending = scotty 3000 $ do
   middleware $ staticPolicy (noDots >-> addBase "./public")
   middleware logStdoutDev
@@ -79,7 +73,7 @@ runServer chan pending = scotty 3000 $ do
     word <- param "word"
     html word
 
-awaitCompilation :: T.Text -> Channel -> SafeMVar PendingCompilations -> IO CompileResult
+awaitCompilation :: T.Text -> Channel -> PendingCompilations -> IO CompileResult
 awaitCompilation code chan pending = do
   id <- genMessageId
   let msg = newMsg{ msgBody = Enc.encodeUtf8 code
