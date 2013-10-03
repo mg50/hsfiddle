@@ -37,11 +37,8 @@ tryCompile chan sem (requestMsg, envelope) = do
     Nothing -> return ()
     Just requestId -> do
       print "About to compile"
-      startTime <- getCurrentTime
-      result <- compile $ lazyBytestringToText $ msgBody requestMsg
-      endTime <- getCurrentTime
-      let dt = show $ diffUTCTime endTime startTime
-      print $ "Finished compiling in " ++ dt
+      (result, dt) <- withDiffTime $ compile $ lazyBytestringToText $ msgBody requestMsg
+      print $ "Finished compiling in " ++ show dt
 
       let (txt, queue) = case result of
                            CompileSuccess js -> (js, "compiled")
@@ -49,7 +46,10 @@ tryCompile chan sem (requestMsg, envelope) = do
           replyMsg = newMsg{ msgBody = textToLazyBytestring txt
                            , msgDeliveryMode = Just Persistent
                            , msgReplyTo = Just requestId }
-      publishMsg chan "hsfiddle" queue replyMsg
+
+      putStrLn "About to send back code"
+      (_, dt) <- withDiffTime $ publishMsg chan "hsfiddle" queue replyMsg
+      putStrLn $ "Code sent in " ++ show dt
   release sem
 
 gracefulExit chan conn tag sem done = do
@@ -59,6 +59,12 @@ gracefulExit chan conn tag sem done = do
   closeConnection conn
   putMVar done ()
   putStrLn "Exiting..."
+
+withDiffTime :: IO a -> IO (a, NominalDiffTime)
+withDiffTime m = do startTime <- getCurrentTime
+                    x <- m
+                    endTime <- getCurrentTime
+                    return (x, diffUTCTime endTime startTime)
 
 lazyBytestringToText = TLazy.toStrict . Enc.decodeUtf8
 textToLazyBytestring = Enc.encodeUtf8 . TLazy.fromStrict
