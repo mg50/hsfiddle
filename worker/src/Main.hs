@@ -9,6 +9,7 @@ import qualified Data.Text.Lazy.Encoding as Enc
 import Control.Monad
 import Control.Concurrent
 import System.Posix.Signals
+import Data.Time
 import Config
 import Compile
 import Semaphore
@@ -36,14 +37,18 @@ tryCompile chan sem (requestMsg, envelope) = do
     Nothing -> return ()
     Just requestId -> do
       print "About to compile"
+      startTime <- getCurrentTime
       result <- compile $ lazyBytestringToText $ msgBody requestMsg
+      endTime <- getCurrentTime
+      let dt = show $ diffUTCTime endTime startTime
+      print $ "Finished compiling in " ++ dt
+
       let (txt, queue) = case result of
                            CompileSuccess js -> (js, "compiled")
                            CompileError err  -> (err, "error")
           replyMsg = newMsg{ msgBody = textToLazyBytestring txt
                            , msgDeliveryMode = Just Persistent
                            , msgReplyTo = Just requestId }
-      print "Finished compiling"
       publishMsg chan "hsfiddle" queue replyMsg
   release sem
 
