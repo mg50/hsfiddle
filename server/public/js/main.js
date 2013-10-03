@@ -1,4 +1,7 @@
 $(document).ready(function() {
+  var config = require('ace/config')
+  config.set('workerPath', '/js/vendor/ace')
+
   var codeEditor = ace.edit('code-area').getSession()
   codeEditor.setMode('ace/mode/haskell')
 
