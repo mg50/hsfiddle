@@ -25,7 +25,8 @@ main = do
 
   done <- newEmptyMVar
   let stop = gracefulExit chan conn tag sem done
-  forM_ [sigINT, sigTERM] $ \sig -> installHandler sig (Catch stop) Nothing
+  forM_ [sigINT, sigTERM, sigQUIT, sigHUP] $ \sig ->
+    installHandler sig (Catch stop) Nothing
   takeMVar done
 
 tryCompile chan sem (requestMsg, envelope) = do
