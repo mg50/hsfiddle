@@ -2,7 +2,6 @@
 
 module Main where
 import Web.Scotty
-import Control.Monad
 import Control.Monad.Trans
 import Network.Wai.Middleware.Static
 import Network.Wai.Middleware.RequestLogger
@@ -10,7 +9,6 @@ import Network.Wai.Middleware.Gzip
 import qualified Data.Text.Lazy as T
 import qualified Data.Text as TStrict
 import qualified Data.Text.Lazy.Encoding as Enc
-import qualified Data.Map as M
 import Data.Aeson hiding (json)
 import Network.AMQP
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -21,6 +19,7 @@ import Pending
 data CompileResult = CompileSuccess T.Text | CompileFailure T.Text
 type PendingCompilations = Pending TStrict.Text CompileResult
 
+main :: IO ()
 main = do
   conn <- openConnection "127.0.0.1" "/" "guest" "guest"
   chan <- openChannel conn
@@ -40,6 +39,7 @@ main = do
   consumeMsgs chan "error" Ack (errorCallback pending)
   runServer chan pending
 
+compiledCallback, errorCallback :: PendingCompilations -> (Message, Envelope) -> IO ()
 compiledCallback = callback CompileSuccess
 errorCallback = callback CompileFailure
 
@@ -49,9 +49,9 @@ callback :: (T.Text -> CompileResult) ->
             IO ()
 callback ctor pending (msg, envelope) = do
   ackEnv envelope
-  let body = msgBody msg :: BL.ByteString
+  let bod = msgBody msg :: BL.ByteString
   case msgReplyTo msg of
-    Just msgId -> deliverPending pending msgId $ ctor (Enc.decodeUtf8 body)
+    Just msgId -> deliverPending pending msgId $ ctor (Enc.decodeUtf8 bod)
     Nothing    -> return ()
 
 runServer :: Channel -> PendingCompilations -> IO ()
@@ -61,8 +61,8 @@ runServer chan pending = scotty 3000 $ do
   middleware $ gzip def
 
   get "/" $ do
-    file <- liftIO $ readFile "./public/html/index.html"
-    html (T.pack file)
+    fileContents <- liftIO $ readFile "./public/html/index.html"
+    html (T.pack fileContents)
 
   post "/compile" $ do
     code <- param "code"
@@ -75,12 +75,12 @@ runServer chan pending = scotty 3000 $ do
 
 awaitCompilation :: T.Text -> Channel -> PendingCompilations -> IO CompileResult
 awaitCompilation code chan pending = do
-  id <- genMessageId
+  msgId <- genMessageId
   let msg = newMsg{ msgBody = Enc.encodeUtf8 code
                   , msgDeliveryMode = Just Persistent
-                  , msgID = Just id }
+                  , msgID = Just msgId }
   publishMsg chan "hsfiddle" "uncompiled" msg
-  awaitPending pending id
+  awaitPending pending msgId
 
 genMessageId :: IO TStrict.Text
 genMessageId = do uuid <- UUID.V4.nextRandom
