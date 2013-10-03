@@ -9,7 +9,7 @@ import qualified Data.Text.Lazy.Encoding as Enc
 import Control.Monad
 import Control.Concurrent
 import System.Posix.Signals
-import Data.Time
+import Util
 import Config
 import Compile
 import Semaphore
@@ -36,9 +36,9 @@ tryCompile chan sem (requestMsg, envelope) = do
   case msgID requestMsg of
     Nothing -> return ()
     Just requestId -> do
-      print "About to compile"
+      putStrLn "About to compile"
       (result, dt) <- withDiffTime $ compile $ lazyBytestringToText $ msgBody requestMsg
-      print $ "Finished compiling in " ++ show dt
+      putStrLn $ "Finished compiling in " ++ show dt
 
       let (txt, queue) = case result of
                            CompileSuccess js -> (js, "compiled")
@@ -59,12 +59,6 @@ gracefulExit chan conn tag sem done = do
   closeConnection conn
   putMVar done ()
   putStrLn "Exiting..."
-
-withDiffTime :: IO a -> IO (a, NominalDiffTime)
-withDiffTime m = do startTime <- getCurrentTime
-                    x <- m
-                    endTime <- getCurrentTime
-                    return (x, diffUTCTime endTime startTime)
 
 lazyBytestringToText = TLazy.toStrict . Enc.decodeUtf8
 textToLazyBytestring = Enc.encodeUtf8 . TLazy.fromStrict
