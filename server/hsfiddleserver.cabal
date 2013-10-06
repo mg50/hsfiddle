@@ -1,21 +1,14 @@
 name:                hsfiddleserver
 version:             0.1.0.0
--- synopsis:
--- description:
 license:             MIT
 license-file:        LICENSE
 author:              Mark Grant
 maintainer:          mark.alan.grant@gmail.com
--- copyright:
--- category:
 build-type:          Simple
--- extra-source-files:
 cabal-version:       >=1.10
 
 executable hsfiddleserver
   main-is: Main.hs
-  -- other-modules:
-  -- other-extensions:
   build-depends:       base >=4.5,
                        text,
                        mtl,
@@ -27,10 +20,11 @@ executable hsfiddleserver
                        random,
                        process,
                        aeson,
-                       amqp,
                        bytestring,
                        containers,
-                       uuid
+                       uuid,
+                       amqp  == 0.6.0,
+                       hedis == 0.6.2
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall -O2 -threaded -with-rtsopts "-N" -fno-warn-unused-do-bind

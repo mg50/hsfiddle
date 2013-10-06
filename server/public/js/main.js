@@ -30,18 +30,34 @@ $(document).ready(function() {
     $.ajax({
       url: '/compile',
       type: 'post',
-      data: {code: codeEditor.getValue()},
+      data: { code: codeEditor.getValue() },
       dataType: 'json',
       success: function(r) {
-        notification.css({display: 'none'})
-        if(r.error) console.log(r.error)
-        fillFiddle(htmlEditor.getValue(), cssEditor.getValue(), r.js)
+        if(r.errors.length == 0)
+          setTimeout(function() { pollForCompiledCode(r.uuid) }, 500)
+        else
+          console.log(r.errors)
       },
       error: function(r) {
         notification.css({display: 'none'})
       }
     })
   })
+
+  function pollForCompiledCode(uuid) {
+    $.ajax({
+      url:  '/result/' + uuid.toString(),
+      type: 'get',
+      success: function(r) {
+        if(r.ready) {
+	  notification.css({display: 'none'})
+          fillFiddle(htmlEditor.getValue(), cssEditor.getValue(), r.js)
+        } else {
+          setTimeout(function() { pollForCompiledCode(uuid) }, 500)
+        }
+      }
+    })
+  }
 
   function fillFiddle(html, css, js) {
     cssTag = '<style type="text/css">' + css + '</style>'
