@@ -21,19 +21,7 @@ type PendingCompilations = Pending TStrict.Text CompileResult
 
 main :: IO ()
 main = do
-  conn <- openConnection "127.0.0.1" "/" "guest" "guest"
-  chan <- openChannel conn
-
-  declareExchange chan newExchange {exchangeName = "hsfiddle", exchangeType = "direct"}
-
-  declareQueue chan newQueue{queueName = "uncompiled"}
-  declareQueue chan newQueue{queueName = "compiled"  }
-  declareQueue chan newQueue{queueName = "error"     }
-
-  bindQueue chan "uncompiled" "hsfiddle" "uncompiled"
-  bindQueue chan "compiled" "hsfiddle" "compiled"
-  bindQueue chan "error" "hsfiddle" "error"
-
+  chan <- joinAMQP
   pending <- newPending
   consumeMsgs chan "compiled" Ack (compiledCallback pending)
   consumeMsgs chan "error" Ack (errorCallback pending)
@@ -89,3 +77,19 @@ genMessageId = do uuid <- UUID.V4.nextRandom
 jsonify :: CompileResult -> Value
 jsonify (CompileSuccess js)  = object ["error" .= Null, "js" .= js]
 jsonify (CompileFailure err) = object ["error" .= err, "js" .= Null]
+
+joinAMQP = do
+  conn <- openConnection "127.0.0.1" "/" "guest" "guest"
+  chan <- openChannel conn
+
+  declareExchange chan newExchange {exchangeName = "hsfiddle", exchangeType = "direct"}
+
+  declareQueue chan newQueue{queueName = "uncompiled"}
+  declareQueue chan newQueue{queueName = "compiled"  }
+  declareQueue chan newQueue{queueName = "error"     }
+
+  bindQueue chan "uncompiled" "hsfiddle" "uncompiled"
+  bindQueue chan "compiled" "hsfiddle" "compiled"
+  bindQueue chan "error" "hsfiddle" "error"
+
+  return chan

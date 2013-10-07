@@ -1,26 +1,24 @@
 module Pending where
 import Control.Monad
 import Control.Concurrent.MVar
-import Control.Concurrent.SafeMVar
 import qualified Data.Map as M
-import Data.Text.Lazy as T
+import Data.IORef
 
-type Pending a b = SafeMVar (M.Map a (MVar b))
+type Pending a b = IORef (M.Map a (MVar b))
 
 newPending :: (Ord a) => IO (Pending a b)
-newPending = liftM SafeMVar $ newMVar M.empty
+newPending = newIORef M.empty
 
 deliverPending :: (Ord a) => Pending a b -> a -> b -> IO ()
-deliverPending pending id val = modifySafeMVar pending $ \pmap -> do
+deliverPending pending id val = do
+  pmap <- readIORef pending
   case M.lookup id pmap of
     Just mv -> putMVar mv val
     Nothing -> return ()
-  return pmap
 
-awaitPending :: (Ord a) => Pending a b -> a -> IO b
 awaitPending pending id = do
   mvar <- newEmptyMVar
-  modifySafeMVar pending $ return . M.insert id mvar
+  atomicModifyIORef pending $ \pmap -> (M.insert id mvar pmap, ())
   result <- takeMVar mvar
-  modifySafeMVar pending $ return . M.delete id
+  atomicModifyIORef pending $ \pmap -> (M.delete id pmap, ())
   return result
