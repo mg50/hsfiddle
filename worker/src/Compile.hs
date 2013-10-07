@@ -4,9 +4,12 @@ import qualified System.Directory as D
 import qualified System.Process as P
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import Data.Monoid (mconcat)
 import System.Exit (ExitCode(..))
+import Control.Monad
 
-data CompileResult = CompileSuccess T.Text | CompileError T.Text
+data CompileResult = CompileSuccess T.Text
+                   | CompileError T.Text
 
 compile :: T.Text -> IO CompileResult
 compile code = withTempDirectory $ \dir -> do
@@ -33,5 +36,6 @@ ghcjs dir =
   P.readProcessWithExitCode "./bin/compile" [dir] ""
 
 readCompiledJS :: String -> IO CompileResult
-readCompiledJS dir = do js <- TIO.readFile $ dir ++ "/code.jsexe/all.js"
-                        return (CompileSuccess js)
+readCompiledJS dir = do contents <- forM ["lib", "lib1", "out"] $ \file -> do
+                          TIO.readFile $ dir ++ "/code.jsexe/" ++ file ++ ".js"
+                        return $ CompileSuccess $ mconcat contents
