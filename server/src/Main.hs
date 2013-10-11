@@ -15,31 +15,16 @@ import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID.V4
 import Pending
 
-data CompileResult = CompileSuccess T.Text | CompileFailure T.Text
-type PendingCompilations = Pending TStrict.Text CompileResult
+type PendingCompilations = Pending TStrict.Text TStrict.Text
 
 main :: IO ()
 main = do
   chan <- joinAMQP
   pending <- newPending
-  consumeMsgs chan "compiled" Ack (compiledCallback pending)
-  consumeMsgs chan "error" Ack (errorCallback pending)
+  let callback = compileCallback pending
+  consumeMsgs chan "compiled" Ack callback
+  consumeMsgs chan "error" Ack callback
   runServer chan pending
-
-compiledCallback, errorCallback :: PendingCompilations -> (Message, Envelope) -> IO ()
-compiledCallback = callback CompileSuccess
-errorCallback = callback CompileFailure
-
-callback :: (T.Text -> CompileResult) ->
-            PendingCompilations ->
-            (Message, Envelope) ->
-            IO ()
-callback ctor pending (msg, envelope) = do
-  ackEnv envelope
-  let bod = msgBody msg :: BL.ByteString
-  case msgReplyTo msg of
-    Just msgId -> deliverPending pending msgId $ ctor (Enc.decodeUtf8 bod)
-    Nothing    -> return ()
 
 runServer :: Channel -> PendingCompilations -> IO ()
 runServer chan pending = scotty 3000 $ do
@@ -54,14 +39,24 @@ runServer chan pending = scotty 3000 $ do
   post "/compile" $ do
     code <- param "code"
     result <- liftIO $ awaitCompilation code chan pending
-    text result
-    setHeader "Content-Type" "application/json"
+    text $ T.fromStrict result
+    header "Content-Type" "application/json"
 
   get "/ajax/echo/:word" $ do
     word <- param "word"
     html word
 
-awaitCompilation :: T.Text -> Channel -> PendingCompilations -> IO CompileResult
+compileCallback :: PendingCompilations ->
+                   (Message, Envelope) ->
+                   IO ()
+compileCallback pending (msg, envelope) = do
+  ackEnv envelope
+  let bod = msgBody msg :: BL.ByteString
+  case msgReplyTo msg of
+    Just msgId -> deliverPending pending msgId (T.toStrict $ Enc.decodeUtf8 bod)
+    Nothing    -> return ()
+
+awaitCompilation :: T.Text -> Channel -> PendingCompilations -> IO TStrict.Text
 awaitCompilation code chan pending = do
   msgId <- genMessageId
   let msg = newMsg{ msgBody = Enc.encodeUtf8 code
