@@ -4,6 +4,8 @@ module Main where
 import Network.AMQP
 import qualified Data.Text.Lazy as TLazy
 import qualified Data.Text.Lazy.Encoding as Enc
+import qualified Data.ByteString.Lazy.Char8 as BL
+import Data.Aeson
 import Control.Monad
 import Control.Concurrent
 import System.Posix.Signals
@@ -42,8 +44,8 @@ tryCompile chan sem (requestMsg, envelope) = do
       putStrLn $ "Finished compiling in " ++ show dt
 
       let (txt, queue) = case result of
-                           CompileSuccess json -> (json, "compiled")
-                           CompileError err    -> (err, "error")
+                           CompileSuccess{} -> (jsonify result, "compiled")
+                           CompileError{}   -> (jsonify result, "error")
           replyMsg = newMsg{ msgBody = txt
                            , msgDeliveryMode = Just Persistent
                            , msgReplyTo = Just requestId }
@@ -72,3 +74,9 @@ gracefulExit chan conn tag sem done = do
 
 lazyBytestringToText = TLazy.toStrict . Enc.decodeUtf8
 textToLazyBytestring = Enc.encodeUtf8 . TLazy.fromStrict
+
+jsonify :: CompileResult -> BL.ByteString
+jsonify (CompileSuccess lib lib1 out) = encode o
+  where o = object ["lib" .= lib, "lib1" .= lib1, "out" .= out, "error" .= Null]
+jsonify (CompileError err) = encode o
+  where o = object ["error" .= err]
