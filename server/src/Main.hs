@@ -9,7 +9,6 @@ import Network.Wai.Middleware.Gzip
 import qualified Data.Text.Lazy as T
 import qualified Data.Text as TStrict
 import qualified Data.Text.Lazy.Encoding as Enc
-import Data.Aeson hiding (json)
 import Network.AMQP
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.UUID as UUID
@@ -55,7 +54,8 @@ runServer chan pending = scotty 3000 $ do
   post "/compile" $ do
     code <- param "code"
     result <- liftIO $ awaitCompilation code chan pending
-    json $ jsonify result
+    text result
+    setHeader "Content-Type" "application/json"
 
   get "/ajax/echo/:word" $ do
     word <- param "word"
@@ -73,10 +73,6 @@ awaitCompilation code chan pending = do
 genMessageId :: IO TStrict.Text
 genMessageId = do uuid <- UUID.V4.nextRandom
                   return . TStrict.pack $ UUID.toString uuid
-
-jsonify :: CompileResult -> Value
-jsonify (CompileSuccess js)  = object ["error" .= Null, "js" .= js]
-jsonify (CompileFailure err) = object ["error" .= err, "js" .= Null]
 
 joinAMQP = do
   conn <- openConnection "127.0.0.1" "/" "guest" "guest"

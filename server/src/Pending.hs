@@ -1,5 +1,4 @@
 module Pending where
-import Control.Monad
 import Control.Concurrent.MVar
 import qualified Data.Map as M
 import Data.IORef
@@ -16,6 +15,7 @@ deliverPending pending id val = do
     Just mv -> putMVar mv val
     Nothing -> return ()
 
+awaitPending :: (Ord a) => Pending a b -> a -> IO b
 awaitPending pending id = do
   mvar <- newEmptyMVar
   atomicModifyIORef pending $ \pmap -> (M.insert id mvar pmap, ())
