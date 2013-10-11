@@ -1,9 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 
 module Main where
 import Network.AMQP
-import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Text as T
 import qualified Data.Text.Lazy as TLazy
 import qualified Data.Text.Lazy.Encoding as Enc
 import Control.Monad
@@ -14,18 +12,21 @@ import Config
 import Compile
 import Semaphore
 
+main :: IO ()
 main = do
   putStrLn "Starting worker..."
-  Config ampqServer ampqLogin ampqPass maxCompilations <- getConfig "./config.json"
-  conn <- openConnection ampqServer "/" ampqLogin ampqPass
+  Config{..} <- getConfig "./config.json"
+  conn <- openConnection amqpServer "/" amqpLogin amqpPass
   chan <- openChannel conn
   putStrLn "Connected to AMQP server"
 
   sem <- newSemaphore maxCompilations
   tag <- consumeMsgs chan "uncompiled" Ack (tryCompile chan sem)
 
+  hardExit <- newMVar False
   done <- newEmptyMVar
-  let stop = gracefulExit chan conn tag sem done
+
+  let stop = signalHandler chan conn tag sem done hardExit
   forM_ [sigINT, sigTERM, sigQUIT, sigHUP] $ \sig ->
     installHandler sig (Catch stop) Nothing
   takeMVar done
@@ -41,9 +42,9 @@ tryCompile chan sem (requestMsg, envelope) = do
       putStrLn $ "Finished compiling in " ++ show dt
 
       let (txt, queue) = case result of
-                           CompileSuccess js -> (js, "compiled")
-                           CompileError err  -> (err, "error")
-          replyMsg = newMsg{ msgBody = textToLazyBytestring txt
+                           CompileSuccess json -> (json, "compiled")
+                           CompileError err    -> (err, "error")
+          replyMsg = newMsg{ msgBody = txt
                            , msgDeliveryMode = Just Persistent
                            , msgReplyTo = Just requestId }
 
@@ -52,8 +53,17 @@ tryCompile chan sem (requestMsg, envelope) = do
       putStrLn $ "Code sent in " ++ show dt
   release sem
 
+signalHandler chan conn tag sem done hardExit =
+  modifyMVar_ hardExit $ \b ->
+    if not b
+       then do putStrLn "Waiting for compilations to finish before exiting"
+               gracefulExit chan conn tag sem done
+               return True
+       else do putStrLn "Forcing exit"
+               putMVar done ()
+               return True
+
 gracefulExit chan conn tag sem done = do
-  putStrLn "Waiting for compilations to finish..."
   cancelConsumer chan tag
   awaitDrain sem
   closeConnection conn
