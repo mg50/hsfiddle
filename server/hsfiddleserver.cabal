@@ -36,7 +36,8 @@ executable hsfiddleserver
                        redis,
                        hedis,
                        hastache,
-                       data-default
+                       data-default,
+                       MissingH
 
   hs-source-dirs:      src
   default-language:    Haskell2010

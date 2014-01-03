@@ -1,5 +1,5 @@
 */dist/
-*/cabal-dev/
+*/.cabal-sandbox/
 */logs/
 */credentials.json
 config.json

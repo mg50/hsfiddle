@@ -18,7 +18,7 @@ LANGUAGE sql;
 )
 
 CREATE TABLE fiddles (
-  fiddle_id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  fiddle_id SERIAL PRIMAY KEY NOT NULL,
   slug VARCHAR(6) NOT NULL UNIQUE DEFAULT f_random_text(6),
   version int NOT NULL,
   hs TEXT NOT NULL,

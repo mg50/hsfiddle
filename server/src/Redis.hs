@@ -13,7 +13,8 @@ instance Connectable Connection () () where
   connect cred () = do putStrLn "Connecting to Redis."
                        redis <- Redis.connect (toConnectInfo cred)
                        return (redis, ())
-  disconnect conn = void $ runRedis conn quit
+  disconnect conn = void $ do putStrLn "Disconnecting from Redis."
+                              runRedis conn quit
 
 md5Exists :: Connection -> T.Text -> IO Bool
 md5Exists redis md5 = runRedis redis $ do
