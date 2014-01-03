@@ -27,7 +27,7 @@ main = do
   runServer chan pending
 
 runServer :: Channel -> PendingCompilations -> IO ()
-runServer chan pending = scotty 3000 $ do
+runServer chan pending = scotty 80 $ do
   middleware $ staticPolicy (noDots >-> addBase "./public")
   middleware logStdoutDev
   middleware $ gzip def
