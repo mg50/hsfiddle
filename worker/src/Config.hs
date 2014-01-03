@@ -7,15 +7,20 @@ import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as BS
 
 data Config = Config { amqpServer :: String
-                     , amqpLogin :: T.Text
-                     , amqpPass :: T.Text
-                     , maxCompilations :: Int }
+                     , amqpLogin :: String
+                     , amqpPass :: String
+                     , redisHost :: String
+                     , redisTimeout :: Int
+                     , maxCompilations :: Int
+                     }
 
 instance FromJSON Config where
   parseJSON (Object v) =
-    Config <$> (v .: "amqpServer")
-           <*> (v .: "amqpLogin")
+    Config <$> (v .: "amqpHost")
+           <*> (v .: "amqpUser")
            <*> (v .: "amqpPass")
+           <*> (v .: "redisHost")
+           <*> (v .: "redisTimeout")
            <*> (v .: "maxCompilations")
 
 getConfig :: String -> IO Config

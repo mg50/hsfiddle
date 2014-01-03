@@ -3,47 +3,37 @@
 module Main where
 import Web.Scotty
 import Control.Monad.Trans
+import Control.Applicative
+import Control.Concurrent
 import Network.Wai.Middleware.Static
 import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.Gzip
-import qualified Data.Text.Lazy as T
-import qualified Data.Text as TStrict
-import qualified Data.Text.Lazy.Encoding as Enc
 import Data.Aeson hiding (json)
 import Network.AMQP
-import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.UUID as UUID
-import qualified Data.UUID.V4 as UUID.V4
 import Pending
-
-data CompileResult = CompileSuccess T.Text | CompileFailure T.Text
-type PendingCompilations = Pending TStrict.Text CompileResult
+import System.Posix.Signals
+import Data.Monoid
 
 main :: IO ()
 main = do
-  chan <- joinAMQP
-  pending <- newPending
-  consumeMsgs chan "compiled" Ack (compiledCallback pending)
-  consumeMsgs chan "error" Ack (errorCallback pending)
-  runServer chan pending
+  pending  <- newPending
+  cred     <- readCredentials <$> Strict.readFile "./credentials.json"
 
-compiledCallback, errorCallback :: PendingCompilations -> (Message, Envelope) -> IO ()
-compiledCallback = callback CompileSuccess
-errorCallback = callback CompileFailure
+  (amqpConn :: AMQP.Connection, amqpChan) <- connect cred pending
+  (redisConn :: Redis.Redis , _)          <- connect cred ()
+  (pgConn :: PG.PG, _)                    <- connect cred ()
 
-callback :: (T.Text -> CompileResult) ->
-            PendingCompilations ->
-            (Message, Envelope) ->
-            IO ()
-callback ctor pending (msg, envelope) = do
-  ackEnv envelope
-  let bod = msgBody msg :: BL.ByteString
-  case msgReplyTo msg of
-    Just msgId -> deliverPending pending msgId $ ctor (Enc.decodeUtf8 bod)
-    Nothing    -> return ()
+  config   <- readConfig amqp redis postgres <$> Strict.readFile "./config.json"
+
+  let stop = gracefulExit config
+  forM_ [sigINT, sigTERM, sigQUIT, sigHUP] $ \sig ->
+    installHandler sig (Catch stop) Nothing
+
+  putStrLn "Starting webserver."
+  runServer config pending
 
 runServer :: Channel -> PendingCompilations -> IO ()
-runServer chan pending = scotty 3000 $ do
+runServer redis chan pending = scotty 3000 $ do
   middleware $ staticPolicy (noDots >-> addBase "./public")
   middleware logStdoutDev
   middleware $ gzip def
@@ -52,44 +42,47 @@ runServer chan pending = scotty 3000 $ do
     fileContents <- liftIO $ readFile "./public/html/index.html"
     html (T.pack fileContents)
 
+  get "/:fiddleId" $ do
+    fiddleId <- param "fiddleId"
+    retrieveFiddle (postgres config) fiddleId 0
+
+  get "/:fiddleId/:version" $ do
+    fiddleId <- param "fiddleId"
+    version  <- param "version"
+    fiddle <- retrieveFiddle (postgres config) fiddleId (read version)
+
+  post "/save" $ do
+    html' <- param "html"
+    css <- param "css"
+    hs <- param "hs"
+    saveFiddle (postgres config) hs css html'
+
   post "/compile" $ do
     code <- param "code"
-    result <- liftIO $ awaitCompilation code chan pending
-    json $ jsonify result
+    let md5 = MD5.hash code
+    redisHasHash <- md5Exists (redis config) md5
+    result <- if redisHasHash
+                 then return CompileSuccess
+                 else liftIO $ awaitCompilation (md5 <> code) config pending
+    jsonify md5Hash result
+
+  get "/js/:md5" $ do
+    md5 <- param "md5"
+    setHeader "Content-Type" "application/javascript"
+    retrieveMd5 (redis config) md5
 
   get "/ajax/echo/:word" $ do
     word <- param "word"
     html word
 
-awaitCompilation :: T.Text -> Channel -> PendingCompilations -> IO CompileResult
-awaitCompilation code chan pending = do
-  msgId <- genMessageId
-  let msg = newMsg{ msgBody = Enc.encodeUtf8 code
-                  , msgDeliveryMode = Just Persistent
-                  , msgID = Just msgId }
-  publishMsg chan "hsfiddle" "uncompiled" msg
-  awaitPending pending msgId
-
-genMessageId :: IO TStrict.Text
-genMessageId = do uuid <- UUID.V4.nextRandom
-                  return . TStrict.pack $ UUID.toString uuid
+jsonifyFiddle (Fiddle hs css html) = object ["hs" .= hs, "css" .= css, "html" .= html]
 
 jsonify :: CompileResult -> Value
-jsonify (CompileSuccess js)  = object ["error" .= Null, "js" .= js]
-jsonify (CompileFailure err) = object ["error" .= err, "js" .= Null]
+jsonify hash result = json $ case result of
+  Nothing                   -> object ["timeout" .= True]
+  Just CompileSuccess       -> object ["hash" .= hash]
+  Just (CompileFailure err) -> object ["error" .= err]
 
-joinAMQP = do
-  conn <- openConnection "127.0.0.1" "/" "guest" "guest"
-  chan <- openChannel conn
-
-  declareExchange chan newExchange {exchangeName = "hsfiddle", exchangeType = "direct"}
-
-  declareQueue chan newQueue{queueName = "uncompiled"}
-  declareQueue chan newQueue{queueName = "compiled"  }
-  declareQueue chan newQueue{queueName = "error"     }
-
-  bindQueue chan "uncompiled" "hsfiddle" "uncompiled"
-  bindQueue chan "compiled" "hsfiddle" "compiled"
-  bindQueue chan "error" "hsfiddle" "error"
-
-  return chan
+gracefulExit config = do mapM_ disconnect conns
+                         myThreadId >>= killThread
+  where conns = map ($ config) [amqpConn, redisConn, postgresConn]
