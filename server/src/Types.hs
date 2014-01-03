@@ -19,10 +19,10 @@ data Fiddle = Fiddle { hs :: String
                      , html' :: String
                      }
 
-data Credentials = Credentials { amqpAddr  :: String
+data Credentials = Credentials { amqpHost  :: String
                                , amqpUser  :: String
                                , amqpPass  :: String
-                               , redisAddr :: String
+                               , redisHost :: String
                                , redisUser :: String
                                , redisPass :: String
                                , pgHost    :: String

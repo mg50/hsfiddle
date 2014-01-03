@@ -13,6 +13,9 @@ import Network.AMQP
 import Pending
 import System.Posix.Signals
 import Data.Monoid
+import Data.Maybe
+import Data.Default
+import Fiddle
 
 main :: IO ()
 main = do
@@ -25,15 +28,19 @@ main = do
 
   config   <- readConfig amqp redis postgres <$> Strict.readFile "./config.json"
 
+  template <- encodeStr <$> readFile "./public/html/index.html"
+
+  html (T.pack fileContents)
+
   let stop = gracefulExit config
   forM_ [sigINT, sigTERM, sigQUIT, sigHUP] $ \sig ->
     installHandler sig (Catch stop) Nothing
 
   putStrLn "Starting webserver."
-  runServer config pending
+  runServer template config pending
 
 runServer :: Channel -> PendingCompilations -> IO ()
-runServer redis chan pending = scotty 3000 $ do
+runServer template config pending = scotty 3000 $ do
   middleware $ staticPolicy (noDots >-> addBase "./public")
   middleware logStdoutDev
   middleware $ gzip def
@@ -42,19 +49,21 @@ runServer redis chan pending = scotty 3000 $ do
     fileContents <- liftIO $ readFile "./public/html/index.html"
     html (T.pack fileContents)
 
-  get "/:fiddleId" $ do
-    fiddleId <- param "fiddleId"
-    retrieveFiddle (postgres config) fiddleId 0
+  get "/:slug" $ do
+    slug <- param "slug"
+    serveFiddle config template slug 0
 
-  get "/:fiddleId/:version" $ do
-    fiddleId <- param "fiddleId"
+  get "/:slug/:version" $ do
+    slug <- param "slug"
     version  <- param "version"
-    fiddle <- retrieveFiddle (postgres config) fiddleId (read version)
+    serveFiddle config template slug (read version)
 
   post "/save" $ do
-    html' <- param "html"
-    css <- param "css"
-    hs <- param "hs"
+    html'  <- param "html"
+    css    <- param "css"
+    hs     <- param "hs"
+    slug'  <- param "slug"
+    let slug = if T.empty slug' then Nothing else Just slug
     saveFiddle (postgres config) hs css html'
 
   post "/compile" $ do
@@ -75,7 +84,16 @@ runServer redis chan pending = scotty 3000 $ do
     word <- param "word"
     html word
 
-jsonifyFiddle (Fiddle hs css html) = object ["hs" .= hs, "css" .= css, "html" .= html]
+serveFiddle template config slug version = do
+  maybeFiddle <- retrieveFiddle (postgres config) slug (read version)
+  let fiddle   = fromMaybe def maybeFiddle
+      rendered = hastacheStr defaultConfig template (toContext fiddle)
+  html rendered
+
+toContext (Fiddle hs css html) = ctx
+  where ctx "hs"   = MuVariable hs
+        ctx "css"  = MuVariable css
+        ctx "html" = MuVariable html
 
 jsonify :: CompileResult -> Value
 jsonify hash result = json $ case result of
@@ -85,4 +103,4 @@ jsonify hash result = json $ case result of
 
 gracefulExit config = do mapM_ disconnect conns
                          myThreadId >>= killThread
-  where conns = map ($ config) [amqpConn, redisConn, postgresConn]
+  where conns = map ($ config) [amqpConn, redisConn, pgConn]

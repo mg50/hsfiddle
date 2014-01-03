@@ -24,7 +24,7 @@ main = do
   chan <- openChannel amqpConn
   putStrLn "Connected to AMQP server"
 
-  redis <- undefined
+  redis <- connectRedis
 
   sem <- newSemaphore maxCompilations
   tag <- consumeMsgs chan "uncompiled" Ack (tryCompile redis chan sem)

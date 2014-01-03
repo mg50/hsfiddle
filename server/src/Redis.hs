@@ -29,7 +29,7 @@ retrieveMd5 redis md5 = do result <- runRedis redis $ get (Enc.encodeUtf8 md5)
                              Right m -> fmap Enc.decodeUtf8 m
 
 toConnectInfo cred =
-  defaultConnectInfo{ connectHost = undefined --redisHost config
-                    , connectPort = undefined --redisPort config
-                    , connectAuth = undefined --Just (BS.pack $ redisPass cred)
+  defaultConnectInfo{ connectHost = redisHost cred
+                    , connectAuth = Just . toBS $ redisPass cred
                     }
+  where toBS = Enc.encodeUtf8 . T.pack
