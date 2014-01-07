@@ -95,9 +95,9 @@ toContext (Fiddle hs css html) = mkStrContext $ ctx
         ctx "css"  = MuVariable css
         ctx "html" = MuVariable html
 
-jsonify hash result = json $ case result of
-  CompileTimeout     -> object ["timeout" .= True]
-  CompileSuccess     -> object ["hash" .= hash]
-  CompileFailure err -> object ["error" .= err]
+jsonify hash result = json =<< case result of
+  CompileTimeout     -> status status408 >> return (object ["timeout" .= True])
+  CompileFailure err -> status status500 >> return (object ["error" .= err])
+  CompileSuccess     -> return $ object ["hash" .= hash]
 
 textToLazyByteString = EncL.encodeUtf8 . TL.fromStrict
