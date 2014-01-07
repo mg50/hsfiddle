@@ -12,7 +12,7 @@ import qualified Database.Redis as Redis
 
 type Pending a b = IORef (M.Map a (MVar b))
 
-data CompileResult = CompileSuccess | CompileFailure T.Text
+data CompileResult = CompileSuccess | CompileFailure T.Text | CompileTimeout
 type PendingCompilations = Pending TStrict.Text CompileResult
 
 data Fiddle = Fiddle { hs :: String
@@ -31,14 +31,29 @@ data Credentials = Credentials { amqpHost  :: String
                                , pgDb      :: String
                                }
 
-data Config = Config { amqpConn :: AMQP.Connection
-                     , amqpChan :: AMQP.Channel
-                     , redis :: Redis.Connection
-                     , postgres :: PG.Connection
-                     , compileTimeout :: Maybe Int
-                     , port :: Int
-                     }
+-- data Config = Config { amqpConn :: AMQP.Connection
+--                      , amqpChan :: AMQP.Channel
+--                      , redis :: Redis.Connection
+--                      , postgres :: PG.Connection
+--                      , compileTimeout :: Maybe Int
+--                      , port :: Int
+--                      }
 
+data Config a = Config { service        :: a
+                       , compileTimeout :: Maybe Int
+                       , port           :: Int
+                       }
+
+data ProdEnv = ProdEnv { amqpConn' :: AMQP.Connection
+                       , amqpChan' :: AMQP.Channel
+                       , redis'    :: Redis.Connection
+                       , postgres' :: PG.Connection
+                       }
+
+amqpConn = amqpConn' . service
+amqpChan = amqpChan' . service
+redis    = redis' . service
+postgres = postgres' . service
 
 class Connectable a b c | a -> b c where
   connect :: Credentials -> c -> IO (a, b)

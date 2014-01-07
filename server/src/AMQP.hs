@@ -22,13 +22,15 @@ instance Connectable Connection Channel PendingCompilations where
   disconnect conn = do putStrLn "Disconnecting from AMQP."
                        closeConnection conn
 
-awaitCompilation code config pending = do
+awaitCompilation :: Channel -> Maybe Int -> TStrict.Text -> PendingCompilations -> IO CompileResult
+awaitCompilation chan timer code pending = do
   msgId <- genMessageId
   let msg = newMsg{ msgBody = Enc.encodeUtf8 (T.fromStrict code)
                   , msgDeliveryMode = Just Persistent
                   , msgID = Just msgId }
-  publishMsg (amqpChan config) "hsfiddle" "uncompiled" msg
-  awaitPending pending msgId (compileTimeout config)
+  publishMsg chan "hsfiddle" "uncompiled" msg
+  let timer' = fmap (\x -> (x, CompileTimeout)) timer
+  awaitPending pending msgId timer'
 
 genMessageId :: IO TStrict.Text
 genMessageId = do uuid <- UUID.V4.nextRandom

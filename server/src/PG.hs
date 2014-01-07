@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses, OverloadedStrings, ScopedTypeVariables #-}
 
-module PG (retrieveFiddle, saveFiddle) where
+module PG (retrieveFiddle, saveNewFiddle, updateFiddle) where
 import Database.PostgreSQL.Simple hiding (connect)
 import qualified Database.PostgreSQL.Simple as PG
 import Database.PostgreSQL.Simple.FromRow
@@ -26,17 +26,13 @@ retrieveFiddle conn slug version = do
 instance FromRow Fiddle where
   fromRow = Fiddle <$> field <*> field <*> field
 
-saveFiddle :: Maybe T.Text -> Connection -> T.Text -> T.Text -> T.Text -> IO ()
-saveFiddle Nothing     = saveNewFiddle
-saveFiddle (Just slug) = updateFiddle slug
-
 saveNewFiddle :: Connection -> T.Text -> T.Text -> T.Text -> IO ()
 saveNewFiddle conn hs css html = void . withTransaction conn $ do
   let q = "INSERT INTO fiddles (version, hs, css, html) VALUES (?, ?, ?, ?)"
   execute conn q (0 :: Int, T.unpack hs, T.unpack css, T.unpack html)
 
-updateFiddle :: T.Text -> Connection -> T.Text -> T.Text -> T.Text -> IO ()
-updateFiddle slug conn hs css html = void . withTransaction conn $ do
+updateFiddle :: Connection -> T.Text -> T.Text -> T.Text -> T.Text -> IO ()
+updateFiddle conn slug hs css html = void . withTransaction conn $ do
   let versionQuery = "SELECT COALESCE(MAX(version), -1) FROM fiddles WHERE fiddle_id=?"
   (Only version : _) :: [Only Int] <- query conn versionQuery (Only slug)
   let q = "INSERT INTO fiddles (slug, version, hs, css, html) VALUES (?, ?, ?, ?, ?)"

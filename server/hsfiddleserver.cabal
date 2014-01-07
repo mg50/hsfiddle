@@ -37,8 +37,17 @@ executable hsfiddleserver
                        hedis,
                        hastache,
                        data-default,
-                       MissingH
+                       MissingH,
+                       http-types
 
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall -O2 -threaded -with-rtsopts "-N" -fno-warn-unused-do-bind
+
+
+executable spec
+  hs-source-dirs: test, src
+  main-is: Spec.hs
+  build-depends:      base >= 4.5,
+                      hspec,
+                      wai

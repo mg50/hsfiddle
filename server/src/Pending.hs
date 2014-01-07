@@ -1,4 +1,6 @@
 module Pending where
+import Data.Maybe
+import Control.Applicative
 import Control.Monad
 import Control.Concurrent.MVar
 import qualified Data.Map as M
@@ -16,7 +18,7 @@ deliverPending pending id val = do
     Just mv -> tryPutMVar mv val >> return ()
     Nothing -> return ()
 
-awaitPending :: (Ord a) => Pending a b -> a -> Maybe Int -> IO (Maybe b)
+awaitPending :: (Ord a) => Pending a b -> a -> Maybe (Int, b) -> IO b
 awaitPending pending id timer = do
   mvar <- newEmptyMVar
   atomicModifyIORef pending $ \pmap -> (M.insert id mvar pmap, ())
@@ -24,5 +26,6 @@ awaitPending pending id timer = do
   atomicModifyIORef pending $ \pmap -> (M.delete id pmap, ())
   return result
 
-maybeTimeout Nothing action  = liftM Just action
-maybeTimeout (Just t) action = timeout t action
+maybeTimeout Nothing         action = action
+maybeTimeout (Just (t, def)) action = do result <- timeout t action
+                                         return $ fromMaybe def result

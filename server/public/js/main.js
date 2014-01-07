@@ -30,25 +30,33 @@ $(document).ready(function() {
     $.ajax({
       url: '/compile',
       type: 'post',
-      data: {code: codeEditor.getValue()},
+      data: {hs: codeEditor.getValue()},
       dataType: 'json',
       success: function(r) {
         notification.css({display: 'none'})
-        if(r.error) console.log(r.error)
-        fillFiddle(htmlEditor.getValue(), cssEditor.getValue(), r.js)
+        fillFiddle(htmlEditor.getValue(), cssEditor.getValue(), r.hash)
       },
       error: function(r) {
         notification.css({display: 'none'})
+        var msg = r.timeout ? 'Error: server timed out' : r.error
+        reportCompilationError(msg)
       }
     })
   })
 
-  function fillFiddle(html, css, js) {
-    cssTag = '<style type="text/css">' + css + '</style>'
-    jqueryTag = '<script type="text/javascript" src="./js/vendor/jquery.min.js"></script>'
-    scriptTag = '<script type="text/javascript">' + js + '</script>'
-    iframeHtml = '<html><head>' + jqueryTag + cssTag + '</head><body>' + html +
-      scriptTag + '</body></html>'
+  function reportCompilationError(errMsg) {
+    var iframeHtml = '<html><head></head><body><h1>' + errMsg + '</h1></body></html>'
+    fiddleArea.html('<iframe></iframe>')
+    fiddleArea.find('iframe').get(0).contentWindow.document.write(iframeHtml);
+  }
+
+  function fillFiddle(html, css, hsHash) {
+    var cssTag = '<style type="text/css">' + css + '</style>'
+    var jqueryTag = '<script type="text/javascript" src="./js/vendor/jquery.min.js"></script>'
+    var scriptTag = '<script type="text/javascript" src="./compiled/' +
+                      hsHash + '"></script>'
+    var iframeHtml = '<html><head>' + jqueryTag + cssTag + '</head><body>' + html +
+                       scriptTag + '</body></html>'
     fiddleArea.html('<iframe></iframe>')
     fiddleArea.find('iframe').get(0).contentWindow.document.write(iframeHtml);
   }
