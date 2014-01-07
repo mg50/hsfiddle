@@ -12,15 +12,15 @@ import Data.Text (pack)
 import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID.V4
 
-instance Connectable Connection Channel PendingCompilations where
+instance Connectable (Connection, Channel) PendingCompilations where
   connect cred pending = do
     putStrLn "Connecting to AMQP."
     (conn, chan) <- joinAMQP cred
     listen chan pending
     return (conn, chan)
 
-  disconnect conn = do putStrLn "Disconnecting from AMQP."
-                       closeConnection conn
+  disconnect (conn, _) = do putStrLn "Disconnecting from AMQP."
+                            closeConnection conn
 
 awaitCompilation :: Channel -> Maybe Int -> TStrict.Text -> PendingCompilations -> IO CompileResult
 awaitCompilation chan timer code pending = do

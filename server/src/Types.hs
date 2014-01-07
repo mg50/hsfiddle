@@ -55,8 +55,8 @@ amqpChan = amqpChan' . service
 redis    = redis' . service
 postgres = postgres' . service
 
-class Connectable a b c | a -> b c where
-  connect :: Credentials -> c -> IO (a, b)
+class Connectable a b | a -> b where
+  connect :: Credentials -> b -> IO a
   disconnect :: a -> IO ()
 
 --readCredentials :: String -> Credentials

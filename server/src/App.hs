@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module App (app) where
+module App (app, runApp) where
 
 import Data.Monoid
 import Data.Aeson hiding (json)
@@ -29,9 +29,10 @@ import Service.HSFiddle
 import Pending
 import Types
 
-app template' config pending = do
-  let template = encodeStr template'
+runApp template config pending =
+  scotty (port config) $ app (encodeStr template) config pending
 
+app template config pending = do
   middleware $ staticPolicy (noDots >-> addBase "./public")
   middleware logStdoutDev
   middleware $ gzip def

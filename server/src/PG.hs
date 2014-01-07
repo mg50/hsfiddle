@@ -10,10 +10,9 @@ import Data.Maybe
 import Control.Applicative
 import Control.Monad
 
-instance Connectable Connection () () where
+instance Connectable Connection () where
   connect config () = do putStrLn "Connecting to PG database."
-                         conn <- PG.connect (toConnectInfo config)
-                         return (conn, ())
+                         PG.connect (toConnectInfo config)
   disconnect conn   = do putStrLn "Closing connection to PG database."
                          close conn
 

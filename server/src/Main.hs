@@ -25,8 +25,8 @@ main = do
   cred     <- readCredentials "./credentials.json"
 
   (amqpConn :: AMQP.Connection, amqpChan) <- connect cred pending
-  (redisConn :: Redis.Connection , _)     <- connect cred ()
-  (pgConn :: PG.Connection, _)            <- connect cred ()
+  redisConn :: Redis.Connection           <- connect cred ()
+  pgConn    :: PG.Connection              <- connect cred ()
 
   --config   <- readConfig amqp redis postgres <$> Strict.readFile "./config.json"
   let env = ProdEnv { amqpConn' = amqpConn
@@ -46,10 +46,10 @@ main = do
     installHandler sig (Catch stop) Nothing
 
   putStrLn "Starting webserver."
-  scotty (port config) $ app template config pending
+  runApp template config pending
 
 gracefulExit tid config = do
-  disconnect (amqpConn config)
+  disconnect (amqpConn config, amqpChan config)
   disconnect (redis config)
   disconnect (postgres config)
   killThread tid

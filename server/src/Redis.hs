@@ -9,10 +9,9 @@ import qualified Data.Text as T
 import Types
 import Control.Monad
 
-instance Connectable Connection () () where
+instance Connectable Connection () where
   connect cred () = do putStrLn "Connecting to Redis."
-                       redis <- Redis.connect (toConnectInfo cred)
-                       return (redis, ())
+                       Redis.connect (toConnectInfo cred)
   disconnect conn = void $ do putStrLn "Disconnecting from Redis."
                               runRedis conn quit
 
