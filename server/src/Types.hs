@@ -18,7 +18,7 @@ type PendingCompilations = Pending TStrict.Text CompileResult
 data Fiddle = Fiddle { hs :: String
                      , css :: String
                      , html' :: String
-                     }
+                     } deriving (Show, Eq)
 
 data Credentials = Credentials { amqpHost  :: String
                                , amqpUser  :: String

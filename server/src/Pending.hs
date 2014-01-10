@@ -21,9 +21,9 @@ deliverPending pending id val = do
 awaitPending :: (Ord a) => Pending a b -> a -> Maybe (Int, b) -> IO b
 awaitPending pending id timer = do
   mvar <- newEmptyMVar
-  atomicModifyIORef pending $ \pmap -> (M.insert id mvar pmap, ())
+  atomicModifyIORef' pending $ \pmap -> (M.insert id mvar pmap, ())
   result <- maybeTimeout timer (takeMVar mvar)
-  atomicModifyIORef pending $ \pmap -> (M.delete id pmap, ())
+  atomicModifyIORef' pending $ \pmap -> (M.delete id pmap, ())
   return result
 
 maybeTimeout Nothing         action = action

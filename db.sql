@@ -18,10 +18,13 @@ LANGUAGE sql;
 )
 
 CREATE TABLE fiddles (
-  fiddle_id SERIAL PRIMAY KEY NOT NULL,
-  slug VARCHAR(6) NOT NULL UNIQUE DEFAULT f_random_text(6),
+  fiddle_id SERIAL NOT NULL,
+  slug VARCHAR(6) NOT NULL DEFAULT f_random_text(6),
   version int NOT NULL,
   hs TEXT NOT NULL,
   css TEXT NOT NULL,
-  html TEXT NOT NULL
+  html TEXT NOT NULL,
+  PRIMARY KEY (fiddle_id)
 )
+
+CREATE UNIQUE INDEX ON fiddles (slug, version);

@@ -22,11 +22,11 @@ import App
 main :: IO ()
 main = do
   pending  <- newPending
-  cred     <- readCredentials "./credentials.json"
+  cred     <- readCredentials "./config/production.json"
 
-  (amqpConn :: AMQP.Connection, amqpChan) <- connect cred pending
-  redisConn :: Redis.Connection           <- connect cred ()
-  pgConn    :: PG.Connection              <- connect cred ()
+  (amqpConn, amqpChan) :: (AMQP.Connection, AMQP.Channel) <- connect cred pending
+  redisConn :: Redis.Connection <- connect cred ()
+  pgConn    :: PG.Connection    <- connect cred ()
 
   --config   <- readConfig amqp redis postgres <$> Strict.readFile "./config.json"
   let env = ProdEnv { amqpConn' = amqpConn

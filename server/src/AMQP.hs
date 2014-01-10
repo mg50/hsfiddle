@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
 
-module AMQP (awaitCompilation) where
+module AMQP (enqueueCompilation) where
 import Network.AMQP
 import Types
 import Pending
@@ -22,24 +22,18 @@ instance Connectable (Connection, Channel) PendingCompilations where
   disconnect (conn, _) = do putStrLn "Disconnecting from AMQP."
                             closeConnection conn
 
-awaitCompilation :: Channel -> Maybe Int -> TStrict.Text -> PendingCompilations -> IO CompileResult
-awaitCompilation chan timer code pending = do
+enqueueCompilation :: Channel -> TStrict.Text -> IO TStrict.Text
+enqueueCompilation chan code = do
   msgId <- genMessageId
   let msg = newMsg{ msgBody = Enc.encodeUtf8 (T.fromStrict code)
                   , msgDeliveryMode = Just Persistent
                   , msgID = Just msgId }
   publishMsg chan "hsfiddle" "uncompiled" msg
-  let timer' = fmap (\x -> (x, CompileTimeout)) timer
-  awaitPending pending msgId timer'
+  return msgId
 
 genMessageId :: IO TStrict.Text
 genMessageId = do uuid <- UUID.V4.nextRandom
                   return . pack $ UUID.toString uuid
-
-setupAMQP cred pending = do
-  (conn, chan) <- joinAMQP cred
-  listen chan pending
-  return (conn, chan)
 
 joinAMQP :: Credentials -> IO (Connection, Channel)
 joinAMQP cred = do
