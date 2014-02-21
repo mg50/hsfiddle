@@ -15,16 +15,18 @@ import Util
 import Config
 import Compile
 import Semaphore
-import Database.Redis
+import Database.Redis hiding (connect)
+import qualified Database.Redis as Redis
+
 
 main = do
   putStrLn "Starting worker..."
   Config{..} <- getConfig "./config.json"
-  amqpConn <- openConnection amqpServer "/" amqpLogin amqpPass
+  amqpConn <- openConnection amqpServer "/" (T.pack amqpLogin) (T.pack amqpPass)
   chan <- openChannel amqpConn
   putStrLn "Connected to AMQP server"
 
-  redis <- connectRedis
+  redis <- Redis.connect $ toConnectInfo redisHost redisPass
 
   sem <- newSemaphore maxCompilations
   tag <- consumeMsgs chan "uncompiled" Ack (tryCompile redis chan sem)
@@ -74,3 +76,9 @@ splitBL :: Int -> BL.ByteString -> (BS.ByteString, BS.ByteString)
 splitBL offset bl = let text = TLazy.toStrict $ EncL.decodeUtf8 bl
                         (prefix, suffix) = T.splitAt offset text
                     in (Enc.encodeUtf8 prefix, Enc.encodeUtf8 suffix)
+
+toConnectInfo redisHost redisPass =
+  defaultConnectInfo{ connectHost = redisHost
+                    , connectAuth = Just . toBS $ redisPass
+                    }
+  where toBS = Enc.encodeUtf8 . T.pack

@@ -98,6 +98,7 @@ spec = describe "runApp'" $ before clearDb $ do
     it "sends back code md5 when compilation succeeds" $ do
       let code = "somecode" :: T.Text
           compileSuccessfully = compile CompileSuccess 10000
+
       withEnqueuer compileSuccessfully $ do
         resp <- postReq "/compile" $ "hs=" <> toLBS code
         assertStatus 200 resp
@@ -107,6 +108,7 @@ spec = describe "runApp'" $ before clearDb $ do
     it "sends back md5 from cash when available, skipping compilation" $ do
       let code = "somecode" :: T.Text
           md5 = T.pack (toMD5 code)
+
       withMockRedis (error "this shouldn't be called; compilation shouldn't be enqueued") $ \mr -> do
         liftIO $ cache mr md5 ""
         resp <- postReq "/compile" $ "hs=" <> toLBS code

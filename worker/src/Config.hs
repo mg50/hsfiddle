@@ -6,11 +6,12 @@ import Data.Aeson
 import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as BS
 
-data Config = Config { amqpServer :: String
-                     , amqpLogin :: String
-                     , amqpPass :: String
-                     , redisHost :: String
-                     , redisTimeout :: Int
+data Config = Config { amqpServer      :: String
+                     , amqpLogin       :: String
+                     , amqpPass        :: String
+                     , redisHost       :: String
+                     , redisPass       :: String
+                     , redisTimeout    :: Int
                      , maxCompilations :: Int
                      }
 
@@ -20,6 +21,7 @@ instance FromJSON Config where
            <*> (v .: "amqpUser")
            <*> (v .: "amqpPass")
            <*> (v .: "redisHost")
+           <*> (v .: "redisPass")
            <*> (v .: "redisTimeout")
            <*> (v .: "maxCompilations")
 

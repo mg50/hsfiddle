@@ -22,6 +22,7 @@ instance Connectable (Connection, Channel) PendingCompilations where
   disconnect (conn, _) = do putStrLn "Disconnecting from AMQP."
                             closeConnection conn
 
+
 enqueueCompilation :: Channel -> TStrict.Text -> IO TStrict.Text
 enqueueCompilation chan code = do
   msgId <- genMessageId

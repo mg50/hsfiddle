@@ -43,9 +43,7 @@ runApp' template config pending = do
 --  middleware logStdoutDev
   middleware $ gzip def
 
-  get "/" $ do
-    fileContents <- liftIO $ readFile "./public/html/index.html"
-    html (TL.pack fileContents)
+  get "/" $ renderFiddle template (Fiddle "" "" "")
 
   post "/save" $ do
     html'  <- param' "html"
@@ -84,14 +82,15 @@ runApp' template config pending = do
     let version = read (T.unpack version') -- this can crash program
     serveFiddle config slug version template
 
-
 serveFiddle config slug version template = do
   result <- liftIO $ retrieveFiddle config slug version
   case result of
-    Just fiddle -> let ctx = toContext fiddle
-                   in do rendered <- hastacheStr defaultConfig template ctx
-                         html (EncL.decodeUtf8 rendered)
+    Just fiddle -> renderFiddle template fiddle
     Nothing     -> redirect "/"
+
+renderFiddle template fiddle = do
+  rendered <- hastacheStr defaultConfig template (toContext fiddle)
+  html (EncL.decodeUtf8 rendered)
 
 param' = fmap TL.toStrict . param
 
